@@ -18,7 +18,7 @@ setuptools.setup(
         "Programming Language :: Python :: 3",
         "Operating System :: OS Independent",
     ],
-    python_requires='>=3.7',
+    python_requires='>=3.6',
     install_requires=["molecular-builder @ git+https://github.com/henriasv/molecular-builder",
                       "pack-water @ git+https://github.com/evenmn/pack-water"]
 )
