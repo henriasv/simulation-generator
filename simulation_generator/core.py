@@ -9,8 +9,8 @@ import sys
 import json
 import subprocess
 
-kk_gpu_1 = {"partition" : "normal", "ntasks" : 1, "job_name" : "normal", "gres" : "gpu:1"}
-cpu_4 = {"partition":"normal", "ntasks":4, "job_name":"normal"}
+kk_gpu_1 = {"partition" : "normal", "ntasks" : 1, "gres" : "gpu:1"}
+cpu_4 = {"partition":"normal", "ntasks":4}
 
 def create_job_script(machine, job_settings, simulation_settings):
     if machine =="kk_gpu":
