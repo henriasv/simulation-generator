@@ -34,12 +34,7 @@ def create_job_script(machine, job_settings, lammps_varargs):
     return job_script
 
 def generate_simulation(simulation_name, machine="kk_gpu", simulation_settings={}, job_settings={}, destination = "/tmp/mysim", submit=""):
-    # Two options, either a simulation from the provided templates, or one from a folder 
-    if not os.path.isdir(simulation_name):
-        with importlib.resources.path("simulation_generator.simulation_templates", "") as folder_name:
-            path = os.path.join(folder_name, simulation_name)
-    else: 
-        path = os.path.abspath(simulation_name)
+    path = os.path.abspath(simulation_name)
 
     print(f"Creating simulation from template at {path}")
 
