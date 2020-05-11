@@ -12,7 +12,7 @@ import subprocess
 kk_gpu_1 = {"partition" : "normal", "ntasks" : 1, "gres" : "gpu:1"}
 cpu_4 = {"partition":"normal", "ntasks":4}
 
-def create_job_script(machine, job_settings, simulation_settings):
+def create_job_script(machine, job_settings, lammps_varargs):
     if machine =="kk_gpu":
         dict_args = kk_gpu_1
     elif machine =="cpu":
@@ -24,13 +24,16 @@ def create_job_script(machine, job_settings, simulation_settings):
         dict_args[key] = value
     job_script = "#!/bin/bash\n"
     job_script += "\n".join([f"#SBATCH --{key}={value}" for key, value in dict_args.items()])
+
+    varargs_string = " ".join([f"-var {key} {value}" for key, value in lammps_varargs.items()])
+
     if machine == "kk_gpu":
-        job_script += f"\nmpirun -n {dict_args['ntasks']} lmp -k on g 1 -sf kk -pk kokkos newton on neigh half -in run.in\n"
+        job_script += f"\nmpirun -n {dict_args['ntasks']} lmp -k on g {dict_args['ntasks']} -sf kk -pk kokkos newton on neigh half {varargs_string} -in run.in\n"
     elif machine=="cpu":
-        job_script += f"\nmpirun -n {dict_args['ntasks']} lmp -in run.in\n"
+        job_script += f"\nmpirun -n {dict_args['ntasks']} lmp {varargs_string} -in run.in\n"
     return job_script
 
-def generate_simulation(simulation_name, machine="kk_gpu", system_settings={}, simulation_settings={}, job_settings={}, destination = "/tmp/mysim", submit=""):
+def generate_simulation(simulation_name, machine="kk_gpu", simulation_settings={}, job_settings={}, destination = "/tmp/mysim", submit=""):
     # Two options, either a simulation from the provided templates, or one from a folder 
     if not os.path.isdir(simulation_name):
         with importlib.resources.path("simulation_generator.simulation_templates", "") as folder_name:
@@ -51,17 +54,18 @@ def generate_simulation(simulation_name, machine="kk_gpu", system_settings={}, s
         template_files = open(template_files_path, "r").read().splitlines()
         for filename in template_files:
             shutil.copyfile(os.path.join(path, filename), os.path.join(tmp_dir, filename))
-        
-        with open(os.path.join(tmp_dir, "job.sh"), "w") as ofile:
-            job_script = create_job_script(machine, job_settings, simulation_settings)
-            ofile.write(job_script)
 
         from generate import generate 
-        generate(**system_settings)
+        lammps_varargs = generate(**simulation_settings)
         
-        all_settings = {"system_settings": system_settings, 
-                        "simulation_settings" : simulation_settings,
+        with open(os.path.join(tmp_dir, "job.sh"), "w") as ofile:
+            job_script = create_job_script(machine, job_settings, lammps_varargs)
+            ofile.write(job_script)
+
+        all_settings = {"simulation_settings" : simulation_settings,
+                        "lammps_varargs" : lammps_varargs,
                         "job_settings" : job_settings}
+
         with open("parameters.json", "w") as ofile:
             ofile.write(json.dumps(all_settings))
 
@@ -78,9 +82,7 @@ def generate_simulation(simulation_name, machine="kk_gpu", system_settings={}, s
     return destination
 
 
-
-
 if __name__=="__main__":
-    system_settings = {"Z_h": 0.41}
-    destination = generate_simulation("bulk_water_phase_transition_vashishta", machine="cpu", system_settings=system_settings)
+    simulation_settings = {"Z_h": 0.41}
+    destination = generate_simulation("bulk_water_phase_transition_vashishta", machine="cpu", simulation_settings=simulation_settings)
 
