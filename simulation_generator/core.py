@@ -36,7 +36,7 @@ def generate_simulation(simulation_name, machine="kk_gpu", system_settings={}, s
         with importlib.resources.path("simulation_generator.simulation_templates", "") as folder_name:
             path = os.path.join(folder_name, simulation_name)
     else: 
-        path = simulation_name
+        path = os.path.abspath(simulation_name)
 
     print(f"Creating simulation from template at {path}")
 
